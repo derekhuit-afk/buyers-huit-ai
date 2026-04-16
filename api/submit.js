@@ -1,36 +1,36 @@
-import nodemailer from 'nodemailer';
-
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
   const { firstName, email, phone, stage } = req.body;
   if (!firstName || !email) return res.status(400).json({ error: 'Name and email required.' });
 
-  const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: { user: 'derekhuit@gmail.com', pass: process.env.GMAIL_APP_PASSWORD },
+  const SUPABASE_URL = 'https://vvkdnzqgtajeouxlliuk.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ2a2RuenFndGFqZW91eGxsaXVrIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MTAwOTE4NiwiZXhwIjoyMDg2NTg1MTg2fQ.Q61WGhT0KHUbrVc3FiRzQN-vhmy53dEqaad4w4c_Z9o';
+
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/cb_leads`, {
+    method: 'POST',
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': `Bearer ${SUPABASE_KEY}`,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation',
+    },
+    body: JSON.stringify({
+      name: firstName,
+      email: email,
+      phone: phone || null,
+      timeline: stage || null,
+      product_type: 'Buyers Guide',
+      notes: 'Source: buyers.huit.ai — Down Payment & Closing Cost Guide download',
+      status: 'new',
+    }),
   });
 
-  await transporter.sendMail({
-    from: '"Buyers Guide Lead" <derekhuit@gmail.com>',
-    to: 'derekhuit@gmail.com',
-    subject: `New Guide Request: ${firstName}`,
-    html: `<div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;padding:32px;background:#f7f9fc;border-radius:8px;">
-      <div style="background:#0d1b2e;padding:24px 28px;border-radius:6px;margin-bottom:24px;">
-        <h2 style="color:#fff;margin:0;font-size:20px;">New Guide Download Request</h2>
-        <p style="color:#7ab8ff;margin:6px 0 0;font-size:13px;">buyers.huit.ai</p>
-      </div>
-      <table style="width:100%;border-collapse:collapse;">
-        <tr><td style="padding:10px 0;border-bottom:1px solid #e2e8f2;color:#6b7a93;font-size:13px;width:140px;">Name</td>
-            <td style="padding:10px 0;border-bottom:1px solid #e2e8f2;color:#1a2637;font-size:13px;font-weight:600;">${firstName}</td></tr>
-        <tr><td style="padding:10px 0;border-bottom:1px solid #e2e8f2;color:#6b7a93;font-size:13px;">Email</td>
-            <td style="padding:10px 0;border-bottom:1px solid #e2e8f2;color:#2e8bff;font-size:13px;">${email}</td></tr>
-        <tr><td style="padding:10px 0;border-bottom:1px solid #e2e8f2;color:#6b7a93;font-size:13px;">Phone</td>
-            <td style="padding:10px 0;border-bottom:1px solid #e2e8f2;color:#1a2637;font-size:13px;">${phone || 'Not provided'}</td></tr>
-        <tr><td style="padding:10px 0;color:#6b7a93;font-size:13px;">Stage</td>
-            <td style="padding:10px 0;color:#1a2637;font-size:13px;">${stage || 'Not selected'}</td></tr>
-      </table>
-    </div>`,
-  });
+  if (!response.ok) {
+    const err = await response.json();
+    console.error('Supabase error:', err);
+    return res.status(500).json({ error: 'Failed to save lead.' });
+  }
 
   return res.status(200).json({ success: true });
 }
