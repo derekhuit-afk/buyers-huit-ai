@@ -1,0 +1,16 @@
+{
+  "version": 2,
+  "buildCommand": "npm install",
+  "outputDirectory": "public",
+  "functions": {
+    "api/submit.js": { "maxDuration": 10 }
+  },
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "index, follow" }
+      ]
+    }
+  ]
+}
